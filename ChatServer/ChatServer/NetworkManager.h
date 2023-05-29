@@ -68,6 +68,8 @@ public:
 private:
     void AddToPollList(SOCKET* socket, sockaddr_storage* address = nullptr);
     void DeleteSocket(SOCKET* socket);
+    void SendMessageSize(SOCKET socket, size_t bufferSize);
+    size_t ReceiveMessageSize(SOCKET socket);
 };
 
 #endif // NETWORKMANAGER_H
