@@ -291,15 +291,31 @@ void NetworkManager::Send(std::string message)
 void NetworkManager::Send(std::string message, SOCKET socket)
 {
     const char* buffer = message.c_str();
-    //char buffer[6] = "Hello";
-    int bufferLength = message.length();
-    //int bufferLength = 6;
+    size_t bytesSent;
+    size_t bufferSize = message.length();
+    size_t networkBufferSize = htonl(bufferSize);
+    char* messageSize = reinterpret_cast<char*>(&networkBufferSize);
 
-    int total = 0;        // how many bytes we've sent
-    int bytesleft = bufferLength; // how many we have left to send
-    int bytesSent;
-
-    while (total < bufferLength) {
+    // First send the message length to the server
+    bytesSent = send(socket, messageSize, sizeof size_t, 0);
+    if (bytesSent == -1)
+    {
+        LogError("Error sending message length");
+    }
+    else if (bytesSent != sizeof size_t)
+    {
+        LogError("Error, incomplete message length sent");
+    }
+    else
+    {
+        printf("Told peer to receive %zu bytes.\n", bufferSize);
+    }
+    
+    // Second send the message to the server
+    size_t total = 0;        // how many bytes we've sent
+    size_t bytesleft = bufferSize; // how many we have left to send
+    while (total < bufferSize)
+    {
         if((bytesSent = send(socket, buffer + total, bytesleft, 0)) == -1)
         {
             LogError("Error sending message");
@@ -308,27 +324,59 @@ void NetworkManager::Send(std::string message, SOCKET socket)
         else
         {
             total += bytesSent;
-            printf("%d bytes sent for %d of %d\n", bytesSent, total, bufferLength);
+            printf("%zu bytes sent for %zu of %zu\n", bytesSent, total, bufferSize);
             bytesleft -= bytesSent;
         }
     }
+    printf("\n");
 }
 
-char* NetworkManager::Receive()
+std::string NetworkManager::Receive()
 {
     return Receive(_parentSocket);
 }
 
-char* NetworkManager::Receive(SOCKET socket)
+std::string NetworkManager::Receive(SOCKET socket)
 {
-    char buf[MAXDATASIZE];
-    int numbytes;
-    if ((numbytes = recv(socket, buf, MAXDATASIZE - 1, 0)) == -1) {
-        LogError("Error receiving message");
-        exit(1);
+    size_t bytesReceived;
+    size_t networkBufferSize;
+    bytesReceived = recv(socket, reinterpret_cast<char*>(&networkBufferSize), sizeof size_t, 0);
+    size_t bufferSize = ntohl(networkBufferSize);
+    if (bytesReceived == -1)
+    {
+        LogError("Error receiving message length");
     }
-    buf[numbytes] = '\0';
-    return buf;
+    else if (bytesReceived != sizeof size_t)
+    {
+        LogError("Error, incomplete message length received");
+    }
+    else
+    {
+        printf("Told by peer to receive %zu bytes.\n", bufferSize);
+    }
+    
+    char* buffer = new char[bufferSize + 1];
+
+    size_t total = 0;
+    size_t bytesleft = bufferSize;
+    while (total < bufferSize)
+    {
+        if ((bytesReceived = recv(socket, buffer + total, bytesleft, 0)) == -1)
+        {
+            LogError("Error receiving message");
+        }
+        else 
+        {
+            total += bytesReceived;
+            printf("%zu bytes received for %zu of %zu\n", bytesReceived, total, bufferSize);
+            bytesleft -= bytesReceived;
+        }
+    }
+    printf("\n");
+    buffer[bufferSize] = '\0';
+    std::string message(buffer);
+    delete[] buffer;
+    return message;
 }
 
 void NetworkManager::LogError(std::string errorMessage)

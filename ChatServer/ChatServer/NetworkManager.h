@@ -60,8 +60,8 @@ public:
     void CloseAllConnections();
     void Send(std::string message);
     void Send(std::string message, SOCKET socket);
-    char* Receive();
-    char* Receive(SOCKET socket);
+    std::string Receive();
+    std::string Receive(SOCKET socket);
     void LogError(std::string errorMessage);
     std::string GetPeerName(SOCKET socket);
     std::vector<SOCKET> PollSockets();
