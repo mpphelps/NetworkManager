@@ -440,45 +440,65 @@ std::string NetworkManager::GetPeerName(SOCKET socket)
     return peerName;
 }
 
-std::vector<SOCKET> NetworkManager::PollSockets()
+bool NetworkManager::PollIsParentReady(INT timeout)
+{
+    // poll the parent socket and return true if the socket has an event (ie: a connection request)
+    printf("Polling parent socket for data.\n");
+    PollSockets(&_pollfds, 1, timeout);
+    bool parentReady = false;
+    if (_pollfds.size() >= 1)
+    {
+        int pollInHappened = _pollfds[0].revents & POLLIN;
+        if (pollInHappened) 
+        {
+            printf("Parent socket %llu has an event.\n", _pollfds[0].fd);
+            parentReady = true;
+        }
+    }
+    else 
+    {
+        printf("Cant poll parent socket as it hasn't been created yet.");
+    }
+
+    return parentReady;
+}
+
+std::vector<SOCKET> NetworkManager::PollChildren(INT timeout)
+{
+    printf("Polling children sockets for data.\n");
+    PollSockets(&_pollfds, _pollfds.size(), timeout);
+
+    std::vector<SOCKET> readySockets;
+    for (pollfd& fd : _pollfds)
+    {
+        if (fd.fd == _parentSocket)
+        {
+            continue;
+        }
+
+        int pollInHappened = fd.revents & POLLIN;
+        if (pollInHappened)
+        {
+            printf("Child socket %llu has an event.\n", fd.fd);
+            readySockets.push_back(fd.fd);
+        }
+    }
+    return readySockets;
+}
+
+void NetworkManager::PollSockets(std::vector<pollfd>* fdArray, ULONG fds, INT timeout)
 {
     std::vector<SOCKET> readySockets;
     printf("Polling sockets for data.\n");
-    int num_events = WSAPoll(_pollfds.data(), _pollfds.size(), 10000);
+    int num_events = WSAPoll(fdArray->data(), fds, timeout);
     if (num_events == 0)
     {
         printf("Poll timed out!\n");
     }
-    else if(num_events == -1)
+    else if (num_events == -1)
     {
         LogError("Error polling sockets");
     }
-    else
-    {
-        for (auto& pollfd : _pollfds)
-        {
-            int pollInHappened = pollfd.revents & POLLIN;
-            if (pollInHappened && pollfd.fd == _parentSocket)
-            {
-                printf("Parent socket is ready to read");
-                AcceptConnection();
-            }
-            else if (pollInHappened)
-            {
-                printf("File descriptor %llu is ready to read.\n", pollfd.fd);
-                if (pollfd.fd == _parentSocket) continue;
-                else
-                {
-                    readySockets.push_back(pollfd.fd);
-                }
-            }
-            else
-            {
-                printf("File descriptor %llu has no events queued.\n", pollfd.fd);
-            }
-        }
-    }
-    return readySockets;
 }
 
 void NetworkManager::AddToPollList(SOCKET* socket, sockaddr_storage* theirAddress)

@@ -11,10 +11,24 @@ void Server::Initialize()
     _networkManager.CreateParentSocket();
     _networkManager.BindSocket();
     _networkManager.StartListening();
-
 }
 
 void Server::WaitForConnection()
+{
+    while (true) {
+        if (HasIncomingConnection())
+        {
+            AcceptConnection();
+            break;
+        }
+        else
+        {
+            Sleep(1000);
+        }
+    }
+}
+
+void Server::AcceptConnection()
 {
     _networkManager.AcceptConnection();
 }
@@ -35,9 +49,14 @@ void Server::Close()
     _networkManager.CloseAllConnections();
 }
 
+bool Server::HasIncomingConnection()
+{
+    return _networkManager.PollIsParentReady(0);
+}
+
 std::vector<SOCKET> Server::PollConnections()
 {
-    return _networkManager.PollSockets();
+    return _networkManager.PollChildren(10000);
 }
 
 

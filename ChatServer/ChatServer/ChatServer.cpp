@@ -8,6 +8,7 @@ int main()
     Server server("3490");
     server.Initialize();
     server.WaitForConnection();
+
     int i = 0;
     while (i++ <= 3)
     {

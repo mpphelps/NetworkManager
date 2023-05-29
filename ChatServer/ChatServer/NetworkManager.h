@@ -64,12 +64,14 @@ public:
     std::string Receive(SOCKET socket);
     void LogError(std::string errorMessage);
     std::string GetPeerName(SOCKET socket);
-    std::vector<SOCKET> PollSockets();
+    bool PollIsParentReady(INT timeout);
+    std::vector<SOCKET> PollChildren(INT timeout);
 private:
     void AddToPollList(SOCKET* socket, sockaddr_storage* address = nullptr);
     void DeleteSocket(SOCKET* socket);
     void SendMessageSize(SOCKET socket, size_t bufferSize);
     size_t ReceiveMessageSize(SOCKET socket);
+    void PollSockets(std::vector<pollfd>* fdArray, ULONG fds, INT timeout);
 };
 
 #endif // NETWORKMANAGER_H

@@ -9,7 +9,7 @@ Client::Client(PCSTR address, PCSTR port)
 void Client::Initialize()
 {
     _networkManager.ResolveAddress(_address, _port);
-    _networkManager.CreateParentSocket();
+    _networkManager.CreateParentSocket(); 
 }
 
 void Client::Connect()
