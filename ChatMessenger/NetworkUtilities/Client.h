@@ -12,6 +12,8 @@ private:
     PCSTR _address;
     PCSTR _port;
 public:
+    bool IsConnected;
+public:
     Client(PCSTR address, PCSTR port);
     void Initialize();
     void Connect();
@@ -19,5 +21,6 @@ public:
     std::string Receive();
     void Close();
     void PrintIPAddresses();
+    std::string GetUserMessage();
 };
 

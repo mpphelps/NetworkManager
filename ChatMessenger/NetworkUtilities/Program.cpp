@@ -11,17 +11,17 @@ int main()
     client.Connect();
     Sleep(1000);
 
-    client.Send("Hello World 1!");
-    std::string message = client.Receive();
-    std::cout << "Received message from the server: " << message << std::endl;
+    while(client.IsConnected)
+    {
+        std::string message = client.GetUserMessage();
+        client.Send(message);
+        std::string returnMessage = client.Receive();
+        std::cout << "Received message from the server: " << returnMessage << std::endl;
+        if (message == "End Session")
+        {
+            client.Close();
+        }
+    }
 
-    client.Send("Hello World 2!");
-    message = client.Receive();
-    std::cout << "Received message from the server: " << message << std::endl;
-
-    client.Send("Hello World 3!");
-    message = client.Receive();
-    std::cout << "Received message from the server: " << message << std::endl;
-
-    client.Close();
+    
 }

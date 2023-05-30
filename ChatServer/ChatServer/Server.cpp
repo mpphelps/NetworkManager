@@ -3,6 +3,8 @@
 Server::Server(PCSTR port)
 {
     _port = port;
+    IsConnected = false;
+    InSession = true;
 }
 
 void Server::Initialize()
@@ -31,6 +33,7 @@ void Server::WaitForConnection()
 void Server::AcceptConnection()
 {
     _networkManager.AcceptConnection();
+    IsConnected = true;
 }
 
 void Server::Send(std::string message, SOCKET socket)
@@ -47,6 +50,8 @@ std::string Server::Receive(SOCKET socket)
 void Server::Close()
 {
     _networkManager.CloseAllConnections();
+    IsConnected = false;
+    InSession = false;
 }
 
 bool Server::HasIncomingConnection()

@@ -7,6 +7,9 @@ private:
     NetworkManager _networkManager;
     PCSTR _port;
 public:
+    bool IsConnected;
+    bool InSession;
+public:
     Server(PCSTR port);
     void Initialize();
     void WaitForConnection();
